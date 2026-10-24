@@ -43,12 +43,20 @@ Próximamente.
 
 ## Cómo correrlo
 
-Próximamente.
+Requisitos: JDK 21. No hace falta instalar Maven: el proyecto incluye el Maven Wrapper.
 
+```
+cd backend
+./mvnw spring-boot:run
+```
+
+La API queda en http://localhost:8080 y el health check en http://localhost:8080/actuator/health. En Windows usa `.\mvnw.cmd` en lugar de `./mvnw`. Más adelante se podrá levantar todo con `docker compose up`.
 ## Pruebas
 
-Próximamente.
-
+```
+cd backend
+./mvnw test
+```
 ## Decisiones técnicas
 
 Próximamente.

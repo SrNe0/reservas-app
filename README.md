@@ -21,7 +21,7 @@ Construí reservas-app para resolver eso: cada negocio publica sus servicios y h
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 21, Spring Boot 3, Spring Security, Spring Data JPA, Maven |
+| Backend | Java 21, Spring Boot 4, Spring Security, Spring Data JPA, Maven |
 | Base de datos | PostgreSQL, Flyway |
 | Caché y colas | Redis |
 | Frontend | React, TypeScript, Vite, Tailwind CSS |

@@ -68,6 +68,7 @@ cd backend
 ```
 
 En Windows usa `.\mvnw.cmd` en lugar de `./mvnw`.
+
 ## Pruebas
 
 ```

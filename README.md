@@ -69,12 +69,16 @@ SPRING_DATASOURCE_PASSWORD=<la de tu .env> ./mvnw spring-boot:run
 ```
 
 En Windows usa `.\mvnw.cmd` y define la variable antes (`$env:SPRING_DATASOURCE_PASSWORD="..."` en PowerShell).
+
 ## Pruebas
 
 ```
 cd backend
 ./mvnw test
 ```
+
+Las pruebas necesitan Docker en marcha: Testcontainers levanta un PostgreSQL temporal y lo destruye al terminar.
+
 ## Decisiones técnicas
 
 Próximamente.

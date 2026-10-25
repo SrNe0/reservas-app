@@ -8,6 +8,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -59,21 +61,23 @@ class EsquemaTests {
     }
 
     private long crearNegocio(String nombre) {
-        return jdbc.queryForObject(
-                "INSERT INTO negocio (nombre, zona_horaria) VALUES (?, 'UTC') RETURNING id",
-                Long.class, nombre);
+        return insertarYObtenerId(
+                "INSERT INTO negocio (nombre, zona_horaria) VALUES (?, 'UTC') RETURNING id", nombre);
     }
 
     private long crearServicio(long negocioId) {
-        return jdbc.queryForObject(
+        return insertarYObtenerId(
                 "INSERT INTO servicio (negocio_id, nombre, duracion_min, precio) VALUES (?, 'Corte', 30, 10.00) RETURNING id",
-                Long.class, negocioId);
+                negocioId);
     }
 
     private long crearRecurso(long negocioId) {
-        return jdbc.queryForObject(
-                "INSERT INTO recurso (negocio_id, nombre) VALUES (?, 'Sillón 1') RETURNING id",
-                Long.class, negocioId);
+        return insertarYObtenerId(
+                "INSERT INTO recurso (negocio_id, nombre) VALUES (?, 'Sillón 1') RETURNING id", negocioId);
+    }
+
+    private long insertarYObtenerId(String sql, Object... args) {
+        return Objects.requireNonNull(jdbc.queryForObject(sql, Long.class, args));
     }
 
     private void crearUsuario(String email) {

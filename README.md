@@ -58,16 +58,17 @@ En Windows con PowerShell o CMD usa `copy .env.example .env`. Edita el `.env` si
 
 Para detener todo conservando los datos: `docker compose down`. Agregar `-v` borra también el volumen de PostgreSQL.
 
-### Solo el backend, sin Docker
+### Solo el backend, sin levantar la API en Docker
 
-Requisitos: JDK 21. No hace falta instalar Maven porque el proyecto incluye el Maven Wrapper.
+Requisitos: JDK 21 y la base de datos en marcha. No hace falta instalar Maven porque el proyecto incluye el Maven Wrapper.
 
 ```
+docker compose up -d db
 cd backend
-./mvnw spring-boot:run
+SPRING_DATASOURCE_PASSWORD=<la de tu .env> ./mvnw spring-boot:run
 ```
 
-En Windows usa `.\mvnw.cmd` en lugar de `./mvnw`.
+En Windows usa `.\mvnw.cmd` y define la variable antes (`$env:SPRING_DATASOURCE_PASSWORD="..."` en PowerShell).
 
 ## Pruebas
 
@@ -75,6 +76,9 @@ En Windows usa `.\mvnw.cmd` en lugar de `./mvnw`.
 cd backend
 ./mvnw test
 ```
+
+Las pruebas necesitan Docker en marcha: Testcontainers levanta un PostgreSQL temporal y lo destruye al terminar.
+
 ## Decisiones técnicas
 
 Próximamente.

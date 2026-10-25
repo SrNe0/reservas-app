@@ -1,6 +1,8 @@
 package com.reservas.api;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -38,7 +41,8 @@ class EsquemaTests {
 
         assertThatThrownBy(() ->
                 insertarReserva(negocioA, servicioB, recursoA, "2030-01-01 12:00+00", "2030-01-01 13:00+00"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("fk_reserva_servicio");
     }
 
     @Test
@@ -49,7 +53,8 @@ class EsquemaTests {
 
         assertThatThrownBy(() ->
                 insertarReserva(negocio, servicio, recurso, "2030-01-01 11:00+00", "2030-01-01 10:00+00"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ck_reserva_fechas");
     }
 
     @Test
@@ -57,7 +62,30 @@ class EsquemaTests {
         crearUsuario("Ana@Ejemplo.com");
 
         assertThatThrownBy(() -> crearUsuario("ana@ejemplo.com"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("uq_usuario_email");
+    }
+
+    @Test
+    void horarioAceptaDosTurnosElMismoDia() {
+        long negocio = crearNegocio("Barbería");
+
+        insertarHorario(negocio, 1, "09:00", "13:00");
+        insertarHorario(negocio, 1, "15:00", "19:00");
+
+        Integer turnos = jdbc.queryForObject(
+                "SELECT count(*) FROM horario WHERE negocio_id = ? AND dia_semana = 1", Integer.class, negocio);
+        assertThat(turnos).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"18:00,09:00", "09:00,09:00"})
+    void horarioConCierreIgualOAnteriorALaAperturaEsRechazado(String apertura, String cierre) {
+        long negocio = crearNegocio("Barbería");
+
+        assertThatThrownBy(() -> insertarHorario(negocio, 1, apertura, cierre))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ck_horario_horas");
     }
 
     private long crearNegocio(String nombre) {
@@ -83,6 +111,12 @@ class EsquemaTests {
     private void crearUsuario(String email) {
         jdbc.update("INSERT INTO usuario (email, password_hash, nombre, rol) VALUES (?, 'hash', 'Ana', 'CLIENTE')",
                 email);
+    }
+
+    private void insertarHorario(long negocioId, int diaSemana, String apertura, String cierre) {
+        jdbc.update("INSERT INTO horario (negocio_id, dia_semana, hora_apertura, hora_cierre) "
+                        + "VALUES (?, ?, ?::time, ?::time)",
+                negocioId, diaSemana, apertura, cierre);
     }
 
     private void insertarReserva(long negocioId, long servicioId, long recursoId, String inicio, String fin) {

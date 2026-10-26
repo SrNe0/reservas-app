@@ -45,16 +45,16 @@ class RecursoControllerTests {
         Negocio negocio = negocios.save(new Negocio("Barbería", null, "UTC"));
 
         mockMvc.perform(post("/negocios/" + negocio.getId() + "/recursos")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": "Sillón 1"}
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", matchesPattern(".*/recursos/\\d+")))
-                .andExpect(jsonPath("$.negocioId").value(negocio.getId()))
-                .andExpect(jsonPath("$.nombre").value("Sillón 1"))
-                .andExpect(jsonPath("$.activo").value(true))
-                .andExpect(jsonPath("$.creadoEn").isNotEmpty());
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": "Sillón 1"}
+                       """))
+               .andExpect(status().isCreated())
+               .andExpect(header().string("Location", matchesPattern(".*/recursos/\\d+")))
+               .andExpect(jsonPath("$.negocioId").value(negocio.getId()))
+               .andExpect(jsonPath("$.nombre").value("Sillón 1"))
+               .andExpect(jsonPath("$.activo").value(true))
+               .andExpect(jsonPath("$.creadoEn").isNotEmpty());
     }
 
     @Test
@@ -62,21 +62,21 @@ class RecursoControllerTests {
         Negocio negocio = negocios.save(new Negocio("Barbería", null, "UTC"));
 
         mockMvc.perform(post("/negocios/" + negocio.getId() + "/recursos")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": " "}
-                                """))
-                .andExpect(status().isBadRequest());
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": " "}
+                       """))
+               .andExpect(status().isBadRequest());
     }
 
     @Test
     void crearEnUnNegocioInexistenteDevuelve404() throws Exception {
         mockMvc.perform(post("/negocios/999999/recursos")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": "Sillón 1"}
-                                """))
-                .andExpect(status().isNotFound());
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": "Sillón 1"}
+                       """))
+               .andExpect(status().isNotFound());
     }
 
     @Test
@@ -88,8 +88,8 @@ class RecursoControllerTests {
         recursos.save(new Recurso(b.getId(), "Cancha Norte", true));
 
         mockMvc.perform(get("/negocios/" + a.getId() + "/recursos"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
@@ -100,15 +100,15 @@ class RecursoControllerTests {
 
         // Leer, editar y borrar el recurso de B con la URL del negocio A: todo debe dar 404
         mockMvc.perform(get("/negocios/" + a.getId() + "/recursos/" + deB.getId()))
-                .andExpect(status().isNotFound());
+               .andExpect(status().isNotFound());
         mockMvc.perform(put("/negocios/" + a.getId() + "/recursos/" + deB.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": "Invadido", "activo": true}
-                                """))
-                .andExpect(status().isNotFound());
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": "Invadido", "activo": true}
+                       """))
+               .andExpect(status().isNotFound());
         mockMvc.perform(delete("/negocios/" + a.getId() + "/recursos/" + deB.getId()))
-                .andExpect(status().isNotFound());
+               .andExpect(status().isNotFound());
     }
 
     @Test
@@ -117,13 +117,13 @@ class RecursoControllerTests {
         Recurso recurso = recursos.save(new Recurso(negocio.getId(), "Sillón 1", true));
 
         mockMvc.perform(put("/negocios/" + negocio.getId() + "/recursos/" + recurso.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": "Sillón VIP", "activo": false}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Sillón VIP"))
-                .andExpect(jsonPath("$.activo").value(false));
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": "Sillón VIP", "activo": false}
+                       """))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.nombre").value("Sillón VIP"))
+               .andExpect(jsonPath("$.activo").value(false));
     }
 
     @Test
@@ -132,31 +132,37 @@ class RecursoControllerTests {
         Recurso recurso = recursos.save(new Recurso(negocio.getId(), "Sillón 1", false));
 
         mockMvc.perform(put("/negocios/" + negocio.getId() + "/recursos/" + recurso.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nombre": "Sillón 1"}
-                                """))
-                .andExpect(status().isBadRequest());
+                   .contentType(MediaType.APPLICATION_JSON)
+                   .content("""
+                       {"nombre": "Sillón 1"}
+                       """))
+               .andExpect(status().isBadRequest());
     }
 
-    // TODO (tuyo): eliminarDevuelve204
-    // Crea un negocio y un recurso SIN reservas, borra el recurso con DELETE y espera 204.
-    // Luego haz un GET al mismo recurso y espera 404 para comprobar que de verdad desapareció.
-    // Pista: mira eliminarDevuelve204 en ServicioControllerTests.
+    @Test
+    void eliminarDevuelve204() throws Exception {
+        Negocio negocio = negocios.save(new Negocio("Barbería", null, "UTC"));
+        Recurso recurso = recursos.save(new Recurso(negocio.getId(), "Sillón 1", true));
+
+        mockMvc.perform(delete("/negocios/" + negocio.getId() + "/recursos/" + recurso.getId()))
+               .andExpect(status().isNoContent());
+        mockMvc.perform(get("/negocios/" + negocio.getId() + "/recursos/" + recurso.getId()))
+               .andExpect(status().isNotFound());
+    }
 
     @Test
     void eliminarUnRecursoConReservasDevuelve409() throws Exception {
         Negocio negocio = negocios.saveAndFlush(new Negocio("Barbería", null, "UTC"));
         Recurso recurso = recursos.saveAndFlush(new Recurso(negocio.getId(), "Sillón 1", true));
         Long servicioId = jdbc.queryForObject(
-                "INSERT INTO servicio (negocio_id, nombre, duracion_min, precio) VALUES (?, 'Corte', 30, 10.00) RETURNING id",
-                Long.class, negocio.getId());
+            "INSERT INTO servicio (negocio_id, nombre, duracion_min, precio) VALUES (?, 'Corte', 30, 10.00) RETURNING id",
+            Long.class, negocio.getId());
         jdbc.update("INSERT INTO reserva (negocio_id, servicio_id, recurso_id, inicio, fin, precio) "
-                        + "VALUES (?, ?, ?, '2030-01-01 10:00+00', '2030-01-01 10:30+00', 10.00)",
-                negocio.getId(), servicioId, recurso.getId());
+                + "VALUES (?, ?, ?, '2030-01-01 10:00+00', '2030-01-01 10:30+00', 10.00)",
+            negocio.getId(), servicioId, recurso.getId());
 
         mockMvc.perform(delete("/negocios/" + negocio.getId() + "/recursos/" + recurso.getId()))
-                .andExpect(status().isConflict());
+               .andExpect(status().isConflict());
     }
 
 }

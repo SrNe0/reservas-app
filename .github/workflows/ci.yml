@@ -1,0 +1,38 @@
+name: CI
+
+# Cuándo se ejecuta: en cada pull request y en cada push a main
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# El token del workflow solo necesita leer el código
+permissions:
+  contents: read
+
+# Si llega un commit nuevo a la misma rama, cancela la ejecución anterior
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (compilar y probar)
+    # Máquina virtual de GitHub con Docker incluido: Testcontainers lo necesita
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Compilar y correr las pruebas
+        working-directory: backend
+        run: ./mvnw -B verify

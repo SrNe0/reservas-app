@@ -20,13 +20,15 @@ jobs:
     name: Backend (compilar y probar)
     # Máquina virtual de GitHub con Docker incluido: Testcontainers lo necesita
     runs-on: ubuntu-latest
+    # Si algo se cuelga (por ejemplo un contenedor), el job termina en vez de gastar minutos
+    timeout-minutes: 15
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Instalar Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"

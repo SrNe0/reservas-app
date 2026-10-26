@@ -45,7 +45,8 @@ public class RecursoController {
     }
 
     @PutMapping("/{id}")
-    public RecursoResponse actualizar(@PathVariable Long negocioId, @PathVariable Long id, @Valid @RequestBody RecursoRequest datos) {
+    public RecursoResponse actualizar(@PathVariable Long negocioId, @PathVariable Long id,
+                                      @Valid @RequestBody RecursoActualizarRequest datos) {
         return servicio.actualizar(negocioId, id, datos);
     }
 

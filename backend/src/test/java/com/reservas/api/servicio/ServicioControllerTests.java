@@ -104,7 +104,7 @@ class ServicioControllerTests {
         mockMvc.perform(put("/negocios/" + a.getId() + "/servicios/" + deB.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nombre": "Hackeado", "duracionMin": 10, "precio": 1}
+                                {"nombre": "Hackeado", "duracionMin": 10, "precio": 1, "activo": true}
                                 """))
                 .andExpect(status().isNotFound());
         mockMvc.perform(delete("/negocios/" + a.getId() + "/servicios/" + deB.getId()))
@@ -125,6 +125,19 @@ class ServicioControllerTests {
                 .andExpect(jsonPath("$.nombre").value("Corte y barba"))
                 .andExpect(jsonPath("$.duracionMin").value(45))
                 .andExpect(jsonPath("$.activo").value(false));
+    }
+
+    @Test
+    void actualizarSinActivoDevuelve400() throws Exception {
+        Negocio negocio = negocios.save(new Negocio("Barbería", null, "UTC"));
+        Servicio servicio = servicios.save(nuevo(negocio, "Corte"));
+
+        mockMvc.perform(put("/negocios/" + negocio.getId() + "/servicios/" + servicio.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nombre": "Corte", "duracionMin": 30, "precio": 10}
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -48,7 +48,7 @@ public class ServicioController {
 
     @PutMapping("/{id}")
     public ServicioResponse actualizar(@PathVariable Long negocioId, @PathVariable Long id,
-                                       @Valid @RequestBody ServicioRequest datos) {
+                                       @Valid @RequestBody ServicioActualizarRequest datos) {
         return servicio.actualizar(negocioId, id, datos);
     }
 

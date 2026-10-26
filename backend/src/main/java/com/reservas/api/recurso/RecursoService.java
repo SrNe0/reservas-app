@@ -39,9 +39,9 @@ public class RecursoService {
     }
 
     @Transactional
-    public RecursoResponse actualizar(Long negocioId, Long id, RecursoRequest datos) {
+    public RecursoResponse actualizar(Long negocioId, Long id, RecursoActualizarRequest datos) {
         Recurso recurso = buscar(negocioId, id);
-        recurso.actualizar(datos.nombre(), estaActivo(datos));
+        recurso.actualizar(datos.nombre(), datos.activo());
         return RecursoResponse.de(recurso);
     }
 

@@ -40,9 +40,9 @@ public class ServicioService {
     }
 
     @Transactional
-    public ServicioResponse actualizar(Long negocioId, Long id, ServicioRequest datos) {
+    public ServicioResponse actualizar(Long negocioId, Long id, ServicioActualizarRequest datos) {
         Servicio servicio = buscar(negocioId, id);
-        servicio.actualizar(datos.nombre(), datos.duracionMin(), datos.precio(), estaActivo(datos));
+        servicio.actualizar(datos.nombre(), datos.duracionMin(), datos.precio(), datos.activo());
         return ServicioResponse.de(servicio);
     }
 

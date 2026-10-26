@@ -55,7 +55,8 @@ class ServicioControllerTests {
                 .andExpect(header().string("Location", matchesPattern(".*/servicios/\\d+")))
                 .andExpect(jsonPath("$.negocioId").value(negocio.getId()))
                 .andExpect(jsonPath("$.precio").value(12.50))
-                .andExpect(jsonPath("$.activo").value(true));
+                .andExpect(jsonPath("$.activo").value(true))
+                .andExpect(jsonPath("$.creadoEn").isNotEmpty());
     }
 
     @Test

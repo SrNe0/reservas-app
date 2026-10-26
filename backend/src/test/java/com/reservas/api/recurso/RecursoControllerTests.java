@@ -53,7 +53,8 @@ class RecursoControllerTests {
                 .andExpect(header().string("Location", matchesPattern(".*/recursos/\\d+")))
                 .andExpect(jsonPath("$.negocioId").value(negocio.getId()))
                 .andExpect(jsonPath("$.nombre").value("Sillón 1"))
-                .andExpect(jsonPath("$.activo").value(true));
+                .andExpect(jsonPath("$.activo").value(true))
+                .andExpect(jsonPath("$.creadoEn").isNotEmpty());
     }
 
     @Test

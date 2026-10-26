@@ -46,7 +46,8 @@ class NegocioControllerTests {
                 .andExpect(header().string("Location", matchesPattern(".*/negocios/\\d+")))
                 .andExpect(jsonPath("$.nombre").value("Barbería Central"))
                 .andExpect(jsonPath("$.zonaHoraria").value("America/Bogota"))
-                .andExpect(jsonPath("$.id").isNumber());
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.creadoEn").isNotEmpty());
     }
 
     @Test

@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import java.time.Instant;
 
 @Entity
@@ -29,8 +32,9 @@ public class Negocio {
     @Column(name = "zona_horaria", nullable = false)
     private String zonaHoraria;
 
-    @Column(name = "creado_en", nullable = false, updatable = false)
-    private Instant creadoEn = Instant.now();
+    @Generated(event = EventType.INSERT)
+    @Column(name = "creado_en", nullable = false, insertable = false, updatable = false)
+    private Instant creadoEn;
 
     // JPA necesita un constructor sin argumentos
     protected Negocio() {

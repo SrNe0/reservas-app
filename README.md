@@ -70,6 +70,18 @@ SPRING_DATASOURCE_PASSWORD=<la de tu .env> ./mvnw spring-boot:run
 
 En Windows usa `.\mvnw.cmd` y define la variable antes (`$env:SPRING_DATASOURCE_PASSWORD="..."` en PowerShell).
 
+## API
+
+La documentación interactiva está en Swagger UI: http://localhost:8080/swagger-ui/index.html
+
+| Recurso | Rutas |
+|---|---|
+| Negocios | `/negocios`, `/negocios/{id}` |
+| Servicios | `/negocios/{negocioId}/servicios`, `/negocios/{negocioId}/servicios/{id}` |
+| Recursos (barbero, cancha, consultorio) | `/negocios/{negocioId}/recursos`, `/negocios/{negocioId}/recursos/{id}` |
+
+Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas.
+
 ## Pruebas
 
 ```
@@ -81,7 +93,11 @@ Las pruebas necesitan Docker en marcha: Testcontainers levanta un PostgreSQL tem
 
 ## Decisiones técnicas
 
-Próximamente.
+- **Aislamiento por negocio desde la ruta:** servicios y recursos cuelgan de `/negocios/{negocioId}/...` y toda consulta busca por `(id, negocioId)`. Si pides un recurso con el negocio equivocado, responde 404 como si no existiera. Hay pruebas que lo verifican.
+- **El esquema lo maneja Flyway, no Hibernate:** uso `ddl-auto=validate`, así Hibernate solo comprueba que las entidades coincidan con las migraciones.
+- **Claves foráneas compuestas:** una reserva referencia `(servicio_id, negocio_id)` y `(recurso_id, negocio_id)`, de modo que la base de datos impide mezclar datos de negocios distintos.
+- **Organización por funcionalidad:** el código está en paquetes `negocio/`, `servicio/` y `recurso/`, no separado por capas técnicas.
+- **DTO como `record`:** los objetos de entrada y salida son inmutables y las entidades JPA quedan fuera de la API.
 
 ## Roadmap
 

@@ -1,5 +1,7 @@
 # reservas-app
 
+[![CI](https://github.com/SrNe0/reservas-app/actions/workflows/ci.yml/badge.svg)](https://github.com/SrNe0/reservas-app/actions/workflows/ci.yml)
+
 Aplicación web full stack para que pequeños negocios gestionen reservas y turnos en línea, y sus clientes reserven sin llamadas ni mensajes.
 
 ## El problema
@@ -90,6 +92,8 @@ cd backend
 ```
 
 Las pruebas necesitan Docker en marcha: Testcontainers levanta un PostgreSQL temporal y lo destruye al terminar.
+
+El mismo comando corre en GitHub Actions en cada pull request y en cada push a `main` (`.github/workflows/ci.yml`).
 
 ## Decisiones técnicas
 

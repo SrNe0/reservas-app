@@ -8,11 +8,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Immutable;
 
 import java.time.Instant;
 
-// Por ahora solo se lee (disponibilidad); el resto de columnas se mapea al crear reservas
+// Por ahora solo se lee (disponibilidad); el resto de columnas se mapea al crear reservas.
+// @Immutable debe quitarse cuando las reservas se creen o se modifiquen desde JPA.
 @Entity
+@Immutable
 @Table(name = "reserva")
 public class Reserva {
 

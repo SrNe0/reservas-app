@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -85,12 +86,22 @@ public class DisponibilidadService {
 
     private List<Tramo> tramosDeAtencion(Long negocioId, LocalDate fecha, ZoneId zona) {
         int diaSemana = fecha.getDayOfWeek().getValue();
-        return horarios.findByNegocioId(negocioId).stream()
+        List<Horario> delDia = horarios.findByNegocioId(negocioId).stream()
                 .filter(h -> h.getDiaSemana() == diaSemana)
                 .sorted(Comparator.comparing(Horario::getHoraApertura))
-                .map(h -> new Tramo(instante(fecha, h.getHoraApertura(), zona),
-                        instante(fecha, h.getHoraCierre(), zona)))
                 .toList();
+
+        List<Tramo> tramos = new ArrayList<>();
+        for (Horario horario : delDia) {
+            Instant inicio = instante(fecha, horario.getHoraApertura(), zona);
+            Instant fin = instante(fecha, horario.getHoraCierre(), zona);
+            // En el día en que el reloj se adelanta, un horario como 02:00-03:00 no dura nada:
+            // ambas horas caen en el mismo instante y el tramo se descarta
+            if (fin.isAfter(inicio)) {
+                tramos.add(new Tramo(inicio, fin));
+            }
+        }
+        return tramos;
     }
 
     // Una hora local solo es un instante dentro de una zona; ZonedDateTime resuelve los cambios de hora

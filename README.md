@@ -82,8 +82,11 @@ La documentación interactiva está en Swagger UI: http://localhost:8080/swagger
 | Servicios | `/negocios/{negocioId}/servicios`, `/negocios/{negocioId}/servicios/{id}` |
 | Recursos (barbero, cancha, consultorio) | `/negocios/{negocioId}/recursos`, `/negocios/{negocioId}/recursos/{id}` |
 | Horarios de atención | `/negocios/{negocioId}/horarios`, `/negocios/{negocioId}/horarios/{id}` |
+| Disponibilidad (solo `GET`) | `/negocios/{negocioId}/recursos/{recursoId}/disponibilidad?servicioId=N&fecha=AAAA-MM-DD` |
 
 Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas o, en los horarios, si el turno se solapa con otro del mismo día.
+
+La disponibilidad devuelve los turnos libres de un recurso para un servicio en una fecha. La fecha se interpreta en la zona horaria del negocio y los turnos salen en UTC; empiezan cada 15 minutos desde la apertura de cada tramo del horario, no se solapan con reservas confirmadas ni empiezan en el pasado, y solo se consulta hasta 60 días hacia adelante. Es una consulta informativa: no reserva nada, la garantía contra dobles reservas se aplica al crear la reserva.
 
 ## Pruebas
 

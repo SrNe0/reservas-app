@@ -81,8 +81,9 @@ La documentación interactiva está en Swagger UI: http://localhost:8080/swagger
 | Negocios | `/negocios`, `/negocios/{id}` |
 | Servicios | `/negocios/{negocioId}/servicios`, `/negocios/{negocioId}/servicios/{id}` |
 | Recursos (barbero, cancha, consultorio) | `/negocios/{negocioId}/recursos`, `/negocios/{negocioId}/recursos/{id}` |
+| Horarios de atención | `/negocios/{negocioId}/horarios`, `/negocios/{negocioId}/horarios/{id}` |
 
-Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas.
+Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas o, en los horarios, si el turno se solapa con otro del mismo día.
 
 ## Pruebas
 

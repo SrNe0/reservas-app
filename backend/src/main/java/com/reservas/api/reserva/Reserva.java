@@ -8,14 +8,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
-// Por ahora solo se lee (disponibilidad); el resto de columnas se mapea al crear reservas.
-// @Immutable debe quitarse cuando las reservas se creen o se modifiquen desde JPA.
 @Entity
-@Immutable
 @Table(name = "reserva")
 public class Reserva {
 
@@ -38,15 +37,42 @@ public class Reserva {
     @Column(nullable = false)
     private Instant fin;
 
+    // Copia del precio del servicio al reservar, para conservar el histórico
+    @Column(nullable = false, updatable = false)
+    private BigDecimal precio;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoReserva estado;
 
+    @Generated(event = EventType.INSERT)
+    @Column(name = "creado_en", nullable = false, insertable = false, updatable = false)
+    private Instant creadoEn;
+
     protected Reserva() {
+    }
+
+    public Reserva(Long negocioId, Long servicioId, Long recursoId, Instant inicio, Instant fin,
+                   BigDecimal precio) {
+        this.negocioId = negocioId;
+        this.servicioId = servicioId;
+        this.recursoId = recursoId;
+        this.inicio = inicio;
+        this.fin = fin;
+        this.precio = precio;
+        this.estado = EstadoReserva.CONFIRMADA;
     }
 
     public Long getId() {
         return id;
+    }
+
+    public Long getNegocioId() {
+        return negocioId;
+    }
+
+    public Long getServicioId() {
+        return servicioId;
     }
 
     public Long getRecursoId() {
@@ -61,8 +87,16 @@ public class Reserva {
         return fin;
     }
 
+    public BigDecimal getPrecio() {
+        return precio;
+    }
+
     public EstadoReserva getEstado() {
         return estado;
+    }
+
+    public Instant getCreadoEn() {
+        return creadoEn;
     }
 
 }

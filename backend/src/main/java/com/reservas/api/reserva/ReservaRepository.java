@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
@@ -18,5 +19,11 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             ORDER BY r.inicio
             """)
     List<Reserva> buscarConfirmadas(Long recursoId, Instant desde, Instant hasta);
+
+    Optional<Reserva> findByIdAndNegocioId(Long id, Long negocioId);
+
+    List<Reserva> findByNegocioIdOrderByInicio(Long negocioId);
+
+    List<Reserva> findByNegocioIdAndRecursoIdOrderByInicio(Long negocioId, Long recursoId);
 
 }

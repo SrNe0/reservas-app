@@ -61,27 +61,38 @@ public class DisponibilidadService {
                         "No existe el servicio " + servicioId + " en el negocio " + negocioId));
 
         ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
+        if (!recurso.isActivo() || !servicio.isActivo()) {
+            validarFecha(fecha, zona);
+            return respuesta(fecha, zona, servicio, List.of());
+        }
+
+        return respuesta(fecha, zona, servicio, turnos(negocio, recurso, servicio, fecha, true));
+    }
+
+    // Turnos que se podrían reservar ese día. Con descontarReservas = false se ignoran las reservas
+    // existentes: sirve para saber si un intervalo encaja en el horario y la rejilla, aunque esté ocupado.
+    public List<Tramo> turnos(Negocio negocio, Recurso recurso, Servicio servicio, LocalDate fecha,
+                              boolean descontarReservas) {
+        ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         validarFecha(fecha, zona);
 
-        if (!recurso.isActivo() || !servicio.isActivo()) {
-            return respuesta(fecha, zona, servicio, List.of());
-        }
-
-        List<Tramo> atencion = tramosDeAtencion(negocioId, fecha, zona);
+        List<Tramo> atencion = tramosDeAtencion(negocio.getId(), fecha, zona);
         if (atencion.isEmpty()) {
-            return respuesta(fecha, zona, servicio, List.of());
+            return List.of();
         }
 
-        // Los tramos no se solapan y van ordenados: el primero abre y el último cierra el día
-        Instant desde = atencion.getFirst().inicio();
-        Instant hasta = atencion.getLast().fin();
-        List<Tramo> ocupados = reservas.buscarConfirmadas(recursoId, desde, hasta).stream()
-                .map(r -> new Tramo(r.getInicio(), r.getFin()))
-                .toList();
+        List<Tramo> ocupados = List.of();
+        if (descontarReservas) {
+            // Los tramos no se solapan y van ordenados: el primero abre y el último cierra el día
+            Instant desde = atencion.getFirst().inicio();
+            Instant hasta = atencion.getLast().fin();
+            ocupados = reservas.buscarConfirmadas(recurso.getId(), desde, hasta).stream()
+                    .map(r -> new Tramo(r.getInicio(), r.getFin()))
+                    .toList();
+        }
 
-        List<Tramo> turnos = CalculadoraDeTurnos.calcular(atencion, ocupados,
+        return CalculadoraDeTurnos.calcular(atencion, ocupados,
                 Duration.ofMinutes(servicio.getDuracionMin()), REJILLA, reloj.instant());
-        return respuesta(fecha, zona, servicio, turnos);
     }
 
     private List<Tramo> tramosDeAtencion(Long negocioId, LocalDate fecha, ZoneId zona) {

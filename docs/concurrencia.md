@@ -27,12 +27,12 @@ Uso la misma prueba, `ReservaConcurrenciaTests`: 50 hilos envían a la vez el `P
 | Configuración | Resultado |
 |---|---|
 | Solo la comprobación en el servicio (Java) | **10 reservas confirmadas** del mismo turno |
-| Solo la restricción de exclusión en la base | Nunca hay dos reservas, pero aparecen deadlocks en cadena (35 en una de mis ejecuciones), se agota el pool de conexiones y varias peticiones fallan con un 500 tras 30 s |
+| Solo la restricción de exclusión en la base | La base impide los solapes por cómo funciona la restricción, pero aparecen deadlocks en cadena (35 en una de mis ejecuciones), se agota el pool de conexiones y varias peticiones fallan con un 500 tras 30 s |
 | Restricción de exclusión más bloqueo del recurso | **1 reserva y 49 respuestas 409**, sin deadlocks |
 
 Sobre la primera fila: no salieron 50 reservas. Mi explicación es que el pool de conexiones de HikariCP tiene 10 conexiones por defecto (`total=10` en el log), de modo que solo unas 10 transacciones compiten de verdad, y las demás, al obtener una conexión, ya ven el turno ocupado. El número exacto depende de la carrera y no lo medí con otros tamaños de pool.
 
-La segunda fila fue la sorpresa. La restricción garantiza la corrección, pero no basta como solución final. Cuando varias transacciones insertan filas que chocan a la vez, cada una espera a que termine la otra para saber si hay conflicto. PostgreSQL detecta ese ciclo y aborta una transacción por *deadlock*, pero lo hace de una en una, esperando cada vez su `deadlock_timeout` (1 s por defecto). Mientras tanto esas transacciones retienen las conexiones del pool, y las demás peticiones esperan una conexión hasta que vence el tiempo de espera (30 s) y fallan.
+La segunda fila fue la sorpresa. En esa ejecución la prueba terminó con error al recibir los fallos, antes de contar las filas de la base, así que no medí cuántas reservas quedaron: que no pueda haber dos lo garantiza la restricción, no un conteo mío. Lo que sí medí fueron los deadlocks, el pool agotado y los 500. La restricción garantiza la corrección, pero no basta como solución final. Cuando varias transacciones insertan filas que chocan a la vez, cada una espera a que termine la otra para saber si hay conflicto. PostgreSQL detecta ese ciclo y aborta una transacción por *deadlock*, pero lo hace de una en una, esperando cada vez su `deadlock_timeout` (1 s por defecto). Mientras tanto esas transacciones retienen las conexiones del pool, y las demás peticiones esperan una conexión hasta que vence el tiempo de espera (30 s) y fallan.
 
 ## Alternativas
 

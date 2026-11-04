@@ -63,6 +63,16 @@ public class Reserva {
         this.estado = EstadoReserva.CONFIRMADA;
     }
 
+    public void cancelar() {
+        this.estado = EstadoReserva.CANCELADA;
+    }
+
+    public void reprogramar(Long recursoId, Instant inicio, Instant fin) {
+        this.recursoId = recursoId;
+        this.inicio = inicio;
+        this.fin = fin;
+    }
+
     public Long getId() {
         return id;
     }

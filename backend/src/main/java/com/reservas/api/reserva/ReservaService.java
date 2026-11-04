@@ -8,6 +8,7 @@ import com.reservas.api.recurso.Recurso;
 import com.reservas.api.recurso.RecursoRepository;
 import com.reservas.api.servicio.Servicio;
 import com.reservas.api.servicio.ServicioRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ import java.util.List;
 
 @Service
 public class ReservaService {
+
+    // Nombre de la restricción EXCLUDE creada en la migración V5
+    private static final String RESTRICCION_SOLAPE = "ex_reserva_recurso_solape";
 
     private final ReservaRepository repositorio;
     private final NegocioRepository negocios;
@@ -42,7 +46,7 @@ public class ReservaService {
     public ReservaResponse crear(Long negocioId, ReservaRequest datos) {
         Negocio negocio = negocios.findById(negocioId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el negocio " + negocioId));
-        Recurso recurso = recursos.findByIdAndNegocioId(datos.recursoId(), negocioId).orElseThrow(() ->
+        Recurso recurso = recursos.buscarBloqueandoParaReservar(datos.recursoId(), negocioId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No existe el recurso " + datos.recursoId() + " en el negocio " + negocioId));
         Servicio servicio = servicios.findByIdAndNegocioId(datos.servicioId(), negocioId).orElseThrow(() ->
@@ -58,7 +62,14 @@ public class ReservaService {
 
         Reserva reserva = new Reserva(negocioId, servicio.getId(), recurso.getId(),
                 datos.inicio(), fin, servicio.getPrecio());
-        return ReservaResponse.de(repositorio.save(reserva));
+        try {
+            return ReservaResponse.de(repositorio.save(reserva));
+        } catch (DataIntegrityViolationException e) {
+            if (!violaLaRestriccionDeSolape(e)) {
+                throw e;
+            }
+            throw turnoOcupado();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +88,14 @@ public class ReservaService {
         return ReservaResponse.de(repositorio.findByIdAndNegocioId(id, negocioId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No existe la reserva " + id + " en el negocio " + negocioId)));
+    }
+
+    private boolean violaLaRestriccionDeSolape(DataIntegrityViolationException e) {
+        return e.getMessage() != null && e.getMessage().contains(RESTRICCION_SOLAPE);
+    }
+
+    private ResponseStatusException turnoOcupado() {
+        return new ResponseStatusException(HttpStatus.CONFLICT, "El turno ya está ocupado por otra reserva");
     }
 
     private void verificarTurno(Negocio negocio, Recurso recurso, Servicio servicio, Tramo candidato) {

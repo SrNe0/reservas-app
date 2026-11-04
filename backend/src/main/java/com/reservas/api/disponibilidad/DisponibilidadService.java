@@ -73,6 +73,12 @@ public class DisponibilidadService {
     // existentes: sirve para saber si un intervalo encaja en el horario y la rejilla, aunque esté ocupado.
     public List<Tramo> turnos(Negocio negocio, Recurso recurso, Servicio servicio, LocalDate fecha,
                               boolean descontarReservas) {
+        return turnos(negocio, recurso, servicio, fecha, descontarReservas, null);
+    }
+
+    // ignorarReservaId: reserva que no debe contarse como ocupada (la que se reprograma)
+    public List<Tramo> turnos(Negocio negocio, Recurso recurso, Servicio servicio, LocalDate fecha,
+                              boolean descontarReservas, Long ignorarReservaId) {
         ZoneId zona = ZoneId.of(negocio.getZonaHoraria());
         validarFecha(fecha, zona);
 
@@ -86,7 +92,7 @@ public class DisponibilidadService {
             // Los tramos no se solapan y van ordenados: el primero abre y el último cierra el día
             Instant desde = atencion.getFirst().inicio();
             Instant hasta = atencion.getLast().fin();
-            ocupados = reservas.buscarConfirmadas(recurso.getId(), desde, hasta).stream()
+            ocupados = reservas.buscarConfirmadas(recurso.getId(), desde, hasta, ignorarReservaId).stream()
                     .map(r -> new Tramo(r.getInicio(), r.getFin()))
                     .toList();
         }

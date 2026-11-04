@@ -119,7 +119,7 @@ El mismo comando corre en GitHub Actions en cada pull request y en cada push a `
 | Etapa | Versión | Estado |
 |---|---|---|
 | 1. Base | v0.1.0 | ✅ Completada |
-| 2. Reservas | v0.2.0 | ⬜ Pendiente |
+| 2. Reservas | v0.2.0 | ✅ Completada |
 | 3. Usuarios y seguridad | v0.3.0 | ⬜ Pendiente |
 | 4. Asincronía | v0.4.0 | ⬜ Pendiente |
 | 5. Calidad y documentación | v0.5.0 | ⬜ Pendiente |

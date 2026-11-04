@@ -107,6 +107,7 @@ El mismo comando corre en GitHub Actions en cada pull request y en cada push a `
 - **Aislamiento por negocio desde la ruta:** servicios y recursos cuelgan de `/negocios/{negocioId}/...` y toda consulta busca por `(id, negocioId)`. Si pides un recurso con el negocio equivocado, responde 404 como si no existiera. Hay pruebas que lo verifican.
 - **El esquema lo maneja Flyway, no Hibernate:** uso `ddl-auto=validate`, así Hibernate solo comprueba que las entidades coincidan con las migraciones.
 - **Claves foráneas compuestas:** una reserva referencia `(servicio_id, negocio_id)` y `(recurso_id, negocio_id)`, de modo que la base de datos impide mezclar datos de negocios distintos.
+- **Cero dobles reservas:** una restricción de exclusión de PostgreSQL (`EXCLUDE USING gist` sobre el recurso y el rango `[inicio, fin)` de las reservas confirmadas) impide que dos reservas del mismo recurso se solapen, incluso si llegan a la vez o si el código tiene un fallo. Además bloqueo la fila del recurso al reservar para que las peticiones concurrentes hagan cola: solo con la restricción, una ráfaga sobre el mismo turno provocaba deadlocks que agotaban el pool de conexiones. Lo verifico con una prueba de 50 hilos sobre el mismo turno.
 - **Organización por funcionalidad:** el código está en paquetes `negocio/`, `servicio/` y `recurso/`, no separado por capas técnicas.
 - **DTO como `record`:** los objetos de entrada y salida son inmutables y las entidades JPA quedan fuera de la API.
 

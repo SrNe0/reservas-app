@@ -88,6 +88,53 @@ class EsquemaTests {
                 .hasMessageContaining("ck_horario_horas");
     }
 
+    @Test
+    void dosReservasConfirmadasQueSeSolapanEnElMismoRecursoSonRechazadas() {
+        long negocio = crearNegocio("Barbería");
+        long servicio = crearServicio(negocio);
+        long recurso = crearRecurso(negocio);
+        insertarReserva(negocio, servicio, recurso, "2030-01-01 10:00+00", "2030-01-01 11:00+00");
+
+        assertThatThrownBy(() ->
+                insertarReserva(negocio, servicio, recurso, "2030-01-01 10:30+00", "2030-01-01 11:30+00"))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ex_reserva_recurso_solape");
+    }
+
+    @Test
+    void reservasAdyacentesOEnRecursosDistintosSeAceptan() {
+        long negocio = crearNegocio("Barbería");
+        long servicio = crearServicio(negocio);
+        long recurso = crearRecurso(negocio);
+        long otroRecurso = crearRecurso(negocio);
+        insertarReserva(negocio, servicio, recurso, "2030-01-01 10:00+00", "2030-01-01 11:00+00");
+
+        // Empieza justo cuando termina la anterior: el rango es [inicio, fin)
+        insertarReserva(negocio, servicio, recurso, "2030-01-01 11:00+00", "2030-01-01 12:00+00");
+        // Mismo horario pero otro recurso
+        insertarReserva(negocio, servicio, otroRecurso, "2030-01-01 10:00+00", "2030-01-01 11:00+00");
+
+        Integer total = jdbc.queryForObject("SELECT count(*) FROM reserva WHERE negocio_id = ?",
+                Integer.class, negocio);
+        assertThat(total).isEqualTo(3);
+    }
+
+    @Test
+    void unaReservaCanceladaNoBloqueaElTurno() {
+        long negocio = crearNegocio("Barbería");
+        long servicio = crearServicio(negocio);
+        long recurso = crearRecurso(negocio);
+        jdbc.update("INSERT INTO reserva (negocio_id, servicio_id, recurso_id, inicio, fin, precio, estado) "
+                        + "VALUES (?, ?, ?, '2030-01-01 10:00+00', '2030-01-01 11:00+00', 10.00, 'CANCELADA')",
+                negocio, servicio, recurso);
+
+        insertarReserva(negocio, servicio, recurso, "2030-01-01 10:00+00", "2030-01-01 11:00+00");
+
+        Integer total = jdbc.queryForObject("SELECT count(*) FROM reserva WHERE negocio_id = ?",
+                Integer.class, negocio);
+        assertThat(total).isEqualTo(2);
+    }
+
     private long crearNegocio(String nombre) {
         return insertarYObtenerId(
                 "INSERT INTO negocio (nombre, zona_horaria) VALUES (?, 'UTC') RETURNING id", nombre);

@@ -94,6 +94,20 @@ Para reservar envío el servicio, el recurso y el instante de inicio, que debe s
 
 Se puede cancelar o reprogramar una reserva hasta 2 horas antes de que empiece (con exactamente 2 horas todavía se permite); si falta menos, o ya estaba cancelada, responde 409. Reprogramar acepta otro recurso y aplica las mismas reglas que reservar sin contar la propia reserva como ocupada.
 
+Los errores se devuelven en formato Problem Details (RFC 9457) con `Content-Type: application/problem+json`:
+
+```json
+{
+  "title": "Datos inválidos",
+  "status": 400,
+  "detail": "Uno o más campos de la solicitud no son válidos.",
+  "instance": "/negocios",
+  "errores": [{"campo": "nombre", "mensaje": "must not be blank"}]
+}
+```
+
+El `detail` explica la causa (por ejemplo «El turno ya está ocupado por otra reserva»). Los errores inesperados responden 500 con un mensaje genérico, sin detalles internos.
+
 ## Pruebas
 
 ```

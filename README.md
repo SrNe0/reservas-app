@@ -85,6 +85,7 @@ La documentación interactiva está en Swagger UI: http://localhost:8080/swagger
 | Disponibilidad (solo `GET`) | `/negocios/{negocioId}/recursos/{recursoId}/disponibilidad?servicioId=N&fecha=AAAA-MM-DD` |
 | Reservas | `/negocios/{negocioId}/reservas`, `/negocios/{negocioId}/reservas/{id}` (`POST`, `GET`; el listado admite `?recursoId=`) |
 | Cancelar y reprogramar | `POST /negocios/{negocioId}/reservas/{id}/cancelar` y `.../reprogramar` |
+| Registro de usuarios | `POST /auth/registro` |
 
 Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas o, en los horarios, si el turno se solapa con otro del mismo día.
 
@@ -93,6 +94,8 @@ La disponibilidad devuelve los turnos libres de un recurso para un servicio en u
 Para reservar envío el servicio, el recurso y el instante de inicio, que debe ser uno de los turnos que ofrece la disponibilidad: si no lo es (pasado, fuera del horario o fuera de la rejilla de 15 minutos) responde 400, y si el turno ya está ocupado o el recurso o el servicio están inactivos responde 409. El fin se calcula con la duración del servicio y el precio se copia del servicio al reservar.
 
 Se puede cancelar o reprogramar una reserva hasta 2 horas antes de que empiece (con exactamente 2 horas todavía se permite); si falta menos, o ya estaba cancelada, responde 409. Reprogramar acepta otro recurso y aplica las mismas reglas que reservar sin contar la propia reserva como ocupada.
+
+Para registrarse envío email, contraseña (de 8 a 72 caracteres) y nombre; la cuenta es de CLIENTE salvo que pida `"tipoDeCuenta": "NEGOCIO"`, y no se puede elegir ADMIN. La contraseña se guarda con BCrypt (hash con sal) y no se devuelve nunca; el email se guarda en minúsculas y es único sin distinguir mayúsculas (409 si ya existe).
 
 Los errores se devuelven en formato Problem Details (RFC 9457) con `Content-Type: application/problem+json`:
 

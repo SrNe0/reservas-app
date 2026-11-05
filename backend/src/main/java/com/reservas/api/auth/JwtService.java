@@ -64,6 +64,7 @@ public class JwtService {
             Rol rol = Rol.valueOf(claims.get(CLAIM_ROL, String.class));
             return new DatosDelToken(usuarioId, rol);
         } catch (JwtException | IllegalArgumentException e) {
+            // IllegalArgumentException cubre token nulo/vacío, sub no numérico y rol desconocido
             throw new TokenInvalidoException("Token JWT inválido o caducado", e);
         }
     }

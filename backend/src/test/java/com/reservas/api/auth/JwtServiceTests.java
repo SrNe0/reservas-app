@@ -3,8 +3,13 @@ package com.reservas.api.auth;
 import com.reservas.api.usuario.Rol;
 import com.reservas.api.usuario.Usuario;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -95,16 +100,22 @@ class JwtServiceTests {
     }
 
     @Test
-    void tokenMalFormadoVacioONuloLanzaTokenInvalidoException() {
-        assertThatThrownBy(() -> servicio.validar("no.es.un.jwt"))
-                .isInstanceOf(TokenInvalidoException.class);
-        assertThatThrownBy(() -> servicio.validar("basura"))
-                .isInstanceOf(TokenInvalidoException.class);
-        assertThatThrownBy(() -> servicio.validar(""))
-                .isInstanceOf(TokenInvalidoException.class);
-        assertThatThrownBy(() -> servicio.validar("   "))
-                .isInstanceOf(TokenInvalidoException.class);
-        assertThatThrownBy(() -> servicio.validar(null))
+    void tokenSinFirmaAlgNoneEsRechazado() {
+        String tokenSinFirma = Jwts.builder()
+                .subject("1")
+                .claim("rol", "ADMIN")
+                .compact();
+
+        assertThatThrownBy(() -> servicio.validar(tokenSinFirma))
+                .isInstanceOf(TokenInvalidoException.class)
+                .hasCauseInstanceOf(UnsupportedJwtException.class);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"basura", "no.es.un.jwt", "   "})
+    void tokenMalFormadoVacioONuloLanzaTokenInvalidoException(String tokenInvalido) {
+        assertThatThrownBy(() -> servicio.validar(tokenInvalido))
                 .isInstanceOf(TokenInvalidoException.class);
     }
 

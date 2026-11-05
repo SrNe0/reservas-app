@@ -46,6 +46,10 @@ public class JwtService {
                 .build();
     }
 
+    public long segundosDeVida() {
+        return vida.toSeconds();
+    }
+
     public String emitir(Usuario usuario) {
         Instant ahora = reloj.instant();
         return Jwts.builder()

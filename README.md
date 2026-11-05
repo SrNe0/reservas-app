@@ -54,6 +54,14 @@ docker compose up -d --build
 
 En Windows con PowerShell o CMD usa `copy .env.example .env`. Edita el `.env` si quieres cambiar las contraseñas o los puertos.
 
+`JWT_SECRET` es la clave con la que la API firma los tokens y es obligatoria: `docker compose` no arranca sin ella. El valor de `.env.example` es solo un ejemplo; genera el tuyo (mínimo 32 caracteres) y no lo subas nunca. En PowerShell:
+
+```
+$b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Fill($b); [Convert]::ToBase64String($b)
+```
+
+En Linux, macOS o Git Bash: `openssl rand -base64 48`.
+
 - API: http://localhost:8080
 - Health check: http://localhost:8080/actuator/health
 - PostgreSQL: `127.0.0.1:5432` (usuario y base definidos en `.env`)
@@ -67,10 +75,10 @@ Requisitos: JDK 21 y la base de datos en marcha. No hace falta instalar Maven po
 ```
 docker compose up -d db
 cd backend
-SPRING_DATASOURCE_PASSWORD=<la de tu .env> ./mvnw spring-boot:run
+SPRING_DATASOURCE_PASSWORD=<la de tu .env> JWT_SECRET=<la de tu .env> ./mvnw spring-boot:run
 ```
 
-En Windows usa `.\mvnw.cmd` y define la variable antes (`$env:SPRING_DATASOURCE_PASSWORD="..."` en PowerShell).
+En Windows usa `.\mvnw.cmd` y define las variables antes (`$env:SPRING_DATASOURCE_PASSWORD="..."` y `$env:JWT_SECRET="..."` en PowerShell).
 
 ## API
 
@@ -86,6 +94,7 @@ La documentación interactiva está en Swagger UI: http://localhost:8080/swagger
 | Reservas | `/negocios/{negocioId}/reservas`, `/negocios/{negocioId}/reservas/{id}` (`POST`, `GET`; el listado admite `?recursoId=`) |
 | Cancelar y reprogramar | `POST /negocios/{negocioId}/reservas/{id}/cancelar` y `.../reprogramar` |
 | Registro de usuarios | `POST /auth/registro` |
+| Inicio de sesión | `POST /auth/login` |
 
 Cada una admite crear (`POST`, responde 201 con `Location`), listar y obtener (`GET`), actualizar (`PUT`) y eliminar (`DELETE`, responde 204). Los errores usan 400 si los datos no son válidos, 404 si no existe y 409 si no se puede borrar porque tiene reservas asociadas o, en los horarios, si el turno se solapa con otro del mismo día.
 
@@ -96,6 +105,8 @@ Para reservar envío el servicio, el recurso y el instante de inicio, que debe s
 Se puede cancelar o reprogramar una reserva hasta 2 horas antes de que empiece (con exactamente 2 horas todavía se permite); si falta menos, o ya estaba cancelada, responde 409. Reprogramar acepta otro recurso y aplica las mismas reglas que reservar sin contar la propia reserva como ocupada.
 
 Para registrarse envío email, contraseña (de 8 a 72 caracteres) y nombre; la cuenta es de CLIENTE salvo que pida `"tipoDeCuenta": "NEGOCIO"`, y no se puede elegir ADMIN. La contraseña se guarda con BCrypt (hash con sal) y no se devuelve nunca; el email se guarda en minúsculas y es único sin distinguir mayúsculas (409 si ya existe).
+
+Para iniciar sesión envío email y contraseña a `POST /auth/login` y recibo `{"accessToken": "...", "tipo": "Bearer", "expiraEn": 900}`. El access token es un JWT firmado con HS256 que dura 15 minutos (`JWT_EXPIRACION_MINUTOS`) y lleva el id del usuario y su rol. Se envía en la cabecera `Authorization: Bearer <token>`; en Swagger se pega con el botón «Authorize». Si el email no existe o la contraseña es incorrecta, la respuesta es la misma (401 «Credenciales incorrectas»), y en ambos casos se ejecuta BCrypt para que el tiempo de respuesta tampoco delate qué cuentas existen. Por ahora los endpoints existentes siguen abiertos: el token se valida y se identifica al usuario, pero exigirlo por rol llega en el siguiente paso de la etapa.
 
 Los errores se devuelven en formato Problem Details (RFC 9457) con `Content-Type: application/problem+json`:
 
@@ -128,6 +139,7 @@ El mismo comando corre en GitHub Actions en cada pull request y en cada push a `
 - **El esquema lo maneja Flyway, no Hibernate:** uso `ddl-auto=validate`, así Hibernate solo comprueba que las entidades coincidan con las migraciones.
 - **Claves foráneas compuestas:** una reserva referencia `(servicio_id, negocio_id)` y `(recurso_id, negocio_id)`, de modo que la base de datos impide mezclar datos de negocios distintos.
 - **Cero dobles reservas:** una restricción de exclusión de PostgreSQL (`EXCLUDE USING gist` sobre el recurso y el rango `[inicio, fin)` de las reservas confirmadas) impide que dos reservas del mismo recurso se solapen, incluso si llegan a la vez o si el código tiene un fallo. Además bloqueo la fila del recurso al reservar para que las peticiones concurrentes hagan cola: solo con la restricción, una ráfaga sobre el mismo turno provocaba deadlocks que agotaban el pool de conexiones. Lo verifico con una prueba de 50 hilos sobre el mismo turno. Las mediciones, las alternativas y las limitaciones están en [docs/concurrencia.md](docs/concurrencia.md).
+- **JWT con HS256 y sin estado:** firmo los tokens con una clave simétrica que viene de una variable de entorno (la API no arranca si tiene menos de 32 bytes), porque una sola API firma y verifica; con varios servicios verificando usaría RS256. El precio de no guardar nada en el servidor es que un access token no se puede revocar antes de caducar, por eso dura poco.
 - **Organización por funcionalidad:** el código está en paquetes `negocio/`, `servicio/` y `recurso/`, no separado por capas técnicas.
 - **DTO como `record`:** los objetos de entrada y salida son inmutables y las entidades JPA quedan fuera de la API.
 
